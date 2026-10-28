@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 #include <plume_render_interface.h>
 
@@ -30,6 +31,10 @@ std::unique_ptr<plume::RenderShader> CreateCachedShader(plume::RenderDevice *dev
 // names them, and logs it. The next build copies the captures into the shader
 // dump directory and recompiles them into the cache. Once per hash.
 void CaptureMissingShader(const uint8_t *container, bool pixel_shader, uint64_t hash);
+
+// futari-linux: what identifies vulkan_spirv.bin beside the executable (count and hash), for the pipeline cache's key;
+// empty without one.
+std::string SpirvPackageKey();
 
 // For the memory report: the decompressed shader cache kept in memory.
 uint64_t ShaderCacheHostBytes();

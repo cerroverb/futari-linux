@@ -29,6 +29,11 @@ endif()
 # PC's checked forms, for a test session. The generated pch takes the macros at codegen: regenerate after a change.
 option(FUTARI_RELEASE_FORMS "Non-Switch builds: the post-codegen steps' Switch forms, without the PC self-checks"
        ${FUTARI_LINUX_ARM64})
+# futari-linux: a Linux build that can be distributed, as the Switch NRO (FUTARI_RENUT_RELEASE_SHADERS): no translated
+# game shader in the executable, only Renut's table of numbers about them (tools/linux/release_shader_table.py). The
+# game shaders come from vulkan_spirv.bin beside the executable, which the web installer makes from the player's own
+# executables. OFF (the default) builds them in, for a build made from your own copy. tools/linux/build.sh --release.
+option(FUTARI_LINUX_RELEASE_SHADERS "Linux: no translated game shader in the executable (vulkan_spirv.bin beside it)" OFF)
 # GCC's AArch64 early register allocation (-mearly-ra, GCC 15 and later): the same miscompile rule as the Switch's
 # below, for a Linux AArch64 build made with GCC. Clang (the presets) has no such pass.
 if(FUTARI_LINUX_ARM64 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

@@ -40,6 +40,7 @@
 #include "me/masseffect/banjo_pmull_fingerprint.h"
 #include "me/me_platform_compat.h"  // RexSwitchPinCurrentThreadToCore and the priority helper (no-ops off the Switch)
 #include "renut_engine/gpu/backend/backend.h"
+#include "renut_engine/gpu/render/shader_library.h"
 #include "shader_cache.h"
 
 // banjo-nx's own renderer defines these (me_native_system.cpp, masseffect_native_draws.cpp); they mean the same job
@@ -1451,9 +1452,9 @@ void BeforeDeviceCreated() {
   const std::filesystem::path path = folder / "renut_pipelines.bin";
   // The shader package in the tag: a new one starts the file over, so entries of shaders no build has any more do not
   // pile up (banjo-nx's own cache once reached 258 MB that way). The driver checks its own version and cache UUID.
-  const std::string tag = fmt::format("renut|layout {}|spirv {} {}|entries {}", g_shaderCacheLayout,
+  const std::string tag = fmt::format("renut|layout {}|spirv {} {}|entries {}{}", g_shaderCacheLayout,
                                       g_spirvCacheCompressedSize, g_spirvCacheDecompressedSize,
-                                      g_shaderCacheEntryCount);
+                                      g_shaderCacheEntryCount, ::renut::gpu::SpirvPackageKey());
   plume::ConfigureVulkanPipelineCache(path.string(), tag);
 #if defined(__SWITCH__)
   // A save writes nothing, without asking the driver for its data, when every creation since the last one hit.

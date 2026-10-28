@@ -242,6 +242,21 @@ function(renut_xenos_shader_cache TARGET)
         COMMENT "Recompiling Xenos shaders (RENUT_RECOMP) from ${RENUT_SHADER_DUMP_DIR}"
         USES_TERMINAL VERBATIM)
 
+    # futari-linux: a build for distribution carries no translated game shader. tools/linux/release_shader_table.py
+    # keeps the table of numbers and drops the SPIR-V, and the executable reads the shaders from vulkan_spirv.bin
+    # beside it, which the web installer makes from the player's own executables (render/shader_library.cpp).
+    if(FUTARI_LINUX_RELEASE_SHADERS)
+        set(release_cpp "${RENUT_GPU_GEN_DIR}/shader_cache_release.cpp")
+        add_custom_command(
+            OUTPUT "${release_cpp}"
+            COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/../tools/linux/release_shader_table.py"
+                    "${cache_cpp}" "${release_cpp}"
+            DEPENDS "${cache_cpp}" "${CMAKE_SOURCE_DIR}/../tools/linux/release_shader_table.py"
+            COMMENT "Renut's shader table without the game shaders (FUTARI_LINUX_RELEASE_SHADERS)"
+            VERBATIM)
+        set(cache_cpp "${release_cpp}")
+    endif()
+
     # 3. Compile into the executable.
     add_custom_target(renut_shader_cache_gen DEPENDS "${cache_cpp}")
     add_dependencies(${TARGET} renut_shader_cache_gen)

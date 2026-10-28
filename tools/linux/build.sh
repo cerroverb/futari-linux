@@ -4,6 +4,7 @@
 # update; docs/building-linux.md explains each step.
 #
 #   tools/linux/build.sh [--iso PATH | --game-dir PATH] [--preset linux-arm64|linux-amd64] [--force-codegen] [--jobs N]
+#                        [--release]
 #
 # --iso            your Xbox 360 disc image (needed the first time, when assets/game_root/ is empty)
 # --game-dir       instead of --iso: a folder you already extracted the disc into (default.xex and media/ at its top);
@@ -11,6 +12,9 @@
 # --preset         default: linux-arm64 on AArch64, linux-amd64 on x86-64
 # --force-codegen  regenerate app/generated even when it is up to date
 # --jobs           parallel compile jobs (default: the number of processors; each generated file needs ~1-2 GB)
+# --release        a build that can be distributed: no translated game shader in the executable
+#                  (FUTARI_LINUX_RELEASE_SHADERS); it reads vulkan_spirv.bin beside it, which the web installer makes.
+#                  Without it the shaders are built in again (the same build folder either way)
 #
 # Result: out/<preset>/futari with its libraries and futari.toml (tools/linux/package.sh copies it into a folder
 # with the game files).
@@ -22,6 +26,7 @@ game_dir=""
 preset=""
 force=()
 jobs="$(nproc)"
+release=OFF
 while [ $# -gt 0 ]; do
     case "$1" in
         --iso) iso="$2"; shift ;;
@@ -29,6 +34,7 @@ while [ $# -gt 0 ]; do
         --preset) preset="$2"; shift ;;
         --force-codegen) force=(--force) ;;
         --jobs) jobs="$2"; shift ;;
+        --release) release=ON ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
     shift
@@ -105,6 +111,6 @@ if [ ! -f out/renut_shader_dump/manifest.csv ]; then
 fi
 
 echo "=== build ==="
-cmake --preset "$preset" -S app
+cmake --preset "$preset" -S app "-DFUTARI_LINUX_RELEASE_SHADERS=$release"
 cmake --build "out/$preset" -j "$jobs"
 echo "done: out/$preset/futari"
