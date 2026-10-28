@@ -147,7 +147,11 @@ Switch-only given a Linux form:
   the display's vsync event. Linux has no such event for a window, so here the refreshes are found from when the
   game's images were shown, with Vulkan's `VK_KHR_present_wait` (`Video::WaitPresentShown`,
   `futari_renut_vblank.cpp` `FromPresents`). A display at 60 Hz or a whole multiple of it (120, 180, 240 Hz) is
-  followed; any other rate, or a driver without present wait, keeps the 60 Hz timer, and the log says which. The
+  followed; any other rate, or a driver without present wait, keeps the 60 Hz timer, and the log says which. Under a
+  desktop compositor (KWin, through XWayland) present wait reports when the compositor took each image instead of a
+  refresh, and the grid would follow the game's own presents: the vblanks of every 2 s are counted, and a rate more than
+  3 % away from the display's gives the vblank back to the timer (the log says so). Under gamescope (Steam's Game Mode)
+  the lock holds. The
   "[latency]" line every 10 s gives the phase and the images that were shown a refresh late.
 - `input_sdl_sync_poll` (new, on): the SDK's SDL input driver answered the game's controller read from the events of
   the previous UI-thread pump, so the state it returned was as old as the game's previous read. Each read now updates

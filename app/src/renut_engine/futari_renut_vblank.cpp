@@ -347,7 +347,32 @@ bool FromPresents(double nominal_ns) {
               phase_auto ? fmt::format("its phase found by measurement, at most {} us after it", phase_max_us)
                          : fmt::format("{} us after it", delay_us));
   double last_refresh = 0;
+  // futari-linux (2026-10-28): a check that the grid really follows a display. Under a desktop compositor (KWin through
+  // XWayland, seen on the Legion's NVIDIA and the Odin 3's Turnip) present wait reports when the compositor took each
+  // image, not a refresh, and those times follow the game's own presents, which follow this grid: the grid fed on itself,
+  // drifted later every frame, and the game fell from 60 to 7 fps with input -> present growing past 130 ms. Under
+  // gamescope the times snap to the display's refreshes and the rate holds. So the vblanks of every 2 s are counted; a
+  // rate more than 3 % away from the display's gives the vblank back to the timer.
+  const double wanted_hz = 1e9 / (period * double(every));
+  uint64_t window_start = SteadyNs(), window_vblanks = 0;
   while (g_running.load(std::memory_order_acquire)) {
+    {
+      const uint64_t now = SteadyNs();
+      const double elapsed = double(now - window_start);
+      if (elapsed >= 2e9) {
+        const double hz = double(window_vblanks) * 1e9 / elapsed;
+        if (std::fabs(hz - wanted_hz) > 0.03 * wanted_hz) {
+          REXLOG_INFO("[renut] vblank: the presents do not follow the display ({:.2f} vblanks a second instead of "
+                      "{:.2f}: a compositor's times, futari_vblank_display_sync): the {:.2f} Hz timer takes over",
+                      hz, wanted_hz, 1e9 / nominal_ns);
+          observe.store(false, std::memory_order_release);
+          observer.join();
+          return false;
+        }
+        window_start = now;
+        window_vblanks = 0;
+      }
+    }
     double target;
     uint64_t late = 0, on_time = 0;
     {
@@ -398,6 +423,7 @@ bool FromPresents(double nominal_ns) {
         std::this_thread::yield();
     }
     Vblank();
+    ++window_vblanks;
   }
   observe.store(false, std::memory_order_release);
   observer.join();
