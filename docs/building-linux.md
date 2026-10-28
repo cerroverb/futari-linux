@@ -22,12 +22,12 @@ build runs, so a cross build has nothing to run them with.
 - Clang 18 or later with C++23 (the presets use `clang` / `clang++`), CMake 3.25 or later, Ninja, pkg-config, Git.
 - Python 3 with the `xxhash` module.
 - `glslangValidator` (the glslang tools).
-- DirectXShaderCompiler (`dxc` and `libdxcompiler.so`). XenosRecomp's prebuilt `dxc-bin` has no Linux AArch64 build.
+- DirectXShaderCompiler (`dxc` and `libdxcompiler.so`). XenosRecomp's `dxc-bin` folder in this repository holds no Linux binaries, so the system's DXC is used on AArch64 and on x86-64 (Arch's `directx-shader-compiler`).
 - Development files of X11 (with x11-xcb), xcb and Wayland; ALSA, PulseAudio or PipeWire (SDL3 picks the audio
   back ends it finds headers for).
 - A Vulkan driver (Mesa Turnip on Adreno, Panfrost/PanVK on Mali, NVK on NVIDIA) and the Vulkan loader.
 
-Arch Linux ARM:
+Arch Linux ARM, and Arch or CachyOS on x86-64:
 
 ```sh
 sudo pacman -S --needed base-devel clang lld cmake ninja pkgconf git python python-xxhash glslang directx-shader-compiler libx11 libxcb wayland alsa-lib libpulse pipewire vulkan-icd-loader
@@ -170,9 +170,9 @@ with tearing.
 | `DXC_SYSTEM_LIB` | `libdxcompiler.so` in the library folders | The DXC library XenosRecomp links |
 | `FUTARI_GLSLANG_VALIDATOR` | `glslangValidator` on the PATH | For the native renderer's utility shaders |
 
-The `linux-amd64` preset builds the same tree on x86-64 Linux; there DXC comes from XenosRecomp's `dxc-bin` (the
-`bin/x64/dxc-linux` and `lib/x64/libdxcompiler.so` of [renderbag/dxc-bin](https://github.com/renderbag/dxc-bin) in
-`app/thirdparty/reblue-XenosRecomp/thirdparty/dxc-bin`) unless `FUTARI_DXC` names another.
+The `linux-amd64` preset builds the same tree on x86-64 Linux. There DXC is the system's too, unless the
+`bin/x64/dxc-linux` and `lib/x64/libdxcompiler.so` of [renderbag/dxc-bin](https://github.com/renderbag/dxc-bin) are
+put in `app/thirdparty/reblue-XenosRecomp/thirdparty/dxc-bin` or `FUTARI_DXC` names another.
 
 Not carried over from the Switch build: LTO, PGO and the hot-function order (GCC options and a console profile of the
 NRO), and the console's thread pinning and clock settings.

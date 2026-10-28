@@ -53,7 +53,7 @@ missing=0
 for tool in cmake ninja clang clang++ python3 git glslangValidator pkg-config; do
     if ! command -v "$tool" > /dev/null; then echo "missing: $tool" >&2; missing=1; fi
 done
-if [ "$preset" = linux-arm64 ] && ! command -v dxc > /dev/null; then
+if ! command -v dxc > /dev/null && [ ! -x app/thirdparty/reblue-XenosRecomp/thirdparty/dxc-bin/bin/x64/dxc-linux ]; then
     echo "missing: dxc (DirectXShaderCompiler; docs/building-linux.md)" >&2
     missing=1
 fi

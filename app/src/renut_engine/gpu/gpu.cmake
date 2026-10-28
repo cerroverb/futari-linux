@@ -75,7 +75,9 @@ if(FUTARI_DXC)
     set(RENUT_DXC "${FUTARI_DXC}")
 elseif(CMAKE_HOST_WIN32)
     set(RENUT_DXC "${RENUT_DXC_BIN_DIR}/dxc.exe")
-elseif(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$" AND NOT CMAKE_HOST_APPLE)
+# futari-linux: the same on x86-64 Linux when the tree has no dxc-bin Linux binaries (they are not in the repository).
+elseif(NOT CMAKE_HOST_APPLE AND (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$"
+       OR NOT EXISTS "${RENUT_DXC_BIN_DIR}/dxc-linux"))
     find_program(FUTARI_SYSTEM_DXC NAMES dxc)
     if(NOT FUTARI_SYSTEM_DXC)
         message(FATAL_ERROR "No dxc on the PATH: install DirectXShaderCompiler (docs/building-linux.md) or set FUTARI_DXC")
