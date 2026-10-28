@@ -25,8 +25,20 @@ upstream and its installer page.
 
 > [!NOTE]
 > You need your own copy of the Xbox 360 disc, either a disc image (`.iso`) or a folder you extracted it into. The Black
-> Label and Ver 1.01 DLC packages (`Content/<profile>/435A07D7/00000002`) are optional. There are no prebuilt
-> downloads, because the build contains the game's recompiled code and its shaders. You build it from your own copy.
+> Label and Ver 1.01 DLC packages (`Content/<profile>/435A07D7/00000002`) are optional.
+
+## Installing
+
+1. Open the installer page, **https://cerroverb.github.io/futari-linux-installer/**
+2. Choose your disc image or extracted folder (with the DLC files if you have them), pick the processor of the device
+   you will play on (ARM64 or x86-64), and press **Create futari-linux.zip**. Everything runs in your browser and the
+   game files never leave your computer. The page checks your copy, downloads the Linux build and makes the game's
+   shaders from your own executables, the way upstream's installer does for the Switch.
+3. Extract the zip wherever you keep games and start `futari.sh` in the `futari-linux` folder. To play from Steam, add
+   `futari.sh` as a non-Steam game and start it from Game Mode.
+
+The release build carries no shader of the game. It reads `vulkan_spirv.bin`, which the page makes from your copy,
+from its own folder. To build everything yourself instead, see below.
 
 ## Building
 
@@ -112,6 +124,8 @@ Game Mode so the controller shows up.
 - A system `dxc` and `libdxcompiler` on AArch64 hosts, since there are no prebuilt ARM64 Linux ones.
 - The display-locked vblank and the synchronous SDL pad polling described above.
 - `tools/linux/build.sh`, `codegen.sh` and `package.sh`, and [docs/building-linux.md](docs/building-linux.md).
+- Release builds without the game's shaders (`build.sh --release`, `package.sh --release`). They read
+  `vulkan_spirv.bin` from their own folder, which the installer page makes.
 
 The Windows and Switch builds are untouched. For the port itself (every optimisation, the renderer, audio, and how
 each change was checked) see upstream's README and [docs/futari-notes.md](docs/futari-notes.md).

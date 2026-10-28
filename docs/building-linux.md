@@ -93,6 +93,30 @@ game_root/              the files of your disc
 Run `./futari` from that folder. The Black Label and Ver 1.01 DLC packages go in a `dlc/` folder there, as
 `dlc/<package files>` or `dlc/00000002/<package name>/`; the game installs them at its next start.
 
+## A release for the installer page
+
+A build made with `--release` carries no translated game shader. Renut's table of numbers about the shaders stays in
+the executable (`tools/linux/release_shader_table.py`, as futari-nx's `tools/renut_release_shaders.py` does for the
+Switch NRO), and the shaders themselves are read from `vulkan_spirv.bin` beside the executable. The installer page
+(futari-linux-installer) makes that file from the player's own executables, with Renut's translator and DXC in
+WebAssembly.
+
+```sh
+tools/linux/build.sh --release
+tools/linux/package.sh --release
+```
+
+`package.sh --release` makes `out/futari-linux-<aarch64|x86_64>/` and its `.tar.gz`, with the program, `futari.sh`,
+the settings template and the licenses, and no game file or shader. That archive is the release asset the installer's
+deployment takes. `build.sh --release` uses the same build folder, so only the shader table and the link run again;
+`build.sh` without it builds the shaders in again.
+
+To test a release build before publishing, put a `vulkan_spirv.bin` beside it. The installer's
+`node test/vulkan_node.mjs <game> --out vulkan_spirv.bin` makes the same file the page does. A build with the shaders
+built in writes its own in the same layout with `--renut_export_spirv_package=<file>`, for a comparison with the
+native chain's shaders. Both files are made from the game and are never distributed. Without the file, the log says
+`No ... vulkan_spirv.bin and no game shaders built in` and nothing of the game is drawn.
+
 ## Settings
 
 `futari.toml` next to the executable:
@@ -141,6 +165,7 @@ with tearing.
 | --- | --- | --- |
 | `FUTARI_RELEASE_FORMS` | ON | The post-codegen steps' Switch forms. OFF: the PC's self-checking forms (slower; `[verify]` log lines). Regenerate after changing it |
 | `FUTARI_ARM64_OMIT_FRAME_POINTER` | ON | Game code without the x29 frame chain |
+| `FUTARI_LINUX_RELEASE_SHADERS` | OFF | ON: no translated game shader in the executable, `vulkan_spirv.bin` beside it (`build.sh --release`) |
 | `FUTARI_DXC` | `dxc` on the PATH | DXC for Renut's host shaders and XenosRecomp |
 | `DXC_SYSTEM_LIB` | `libdxcompiler.so` in the library folders | The DXC library XenosRecomp links |
 | `FUTARI_GLSLANG_VALIDATOR` | `glslangValidator` on the PATH | For the native renderer's utility shaders |
