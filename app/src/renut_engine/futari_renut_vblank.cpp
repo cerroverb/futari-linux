@@ -39,6 +39,9 @@
 #endif
 #include <windows.h>
 #endif
+#if !REX_PLATFORM_SWITCH
+#include <SDL3/SDL_video.h>  // futari-linux: the display's own refresh rate (DisplayRefreshNs)
+#endif
 #include <cmath>
 #include <mutex>
 #include <thread>
@@ -225,6 +228,21 @@ uint64_t SteadyNs() {
                       .count());
 }
 
+// futari-linux (2026-10-28): the refresh period of the display the game's window is on, as SDL reports it (0 when it
+// cannot say). The grid starts from it, not from the game's 60 Hz: on a 240 Hz panel under gamescope the images are
+// shown on the 240 Hz refreshes, and a 60 Hz grid fed with those times stepped a 240 Hz refresh earlier every frame
+// (the game ran at 80 fps). With the display's own period every shown time lies on the grid and it holds still; the
+// vblank then comes every m-th refresh as for any m x 60 Hz display.
+double DisplayRefreshNs() {
+  int count = 0;
+  SDL_Window** windows = SDL_GetWindows(&count);
+  SDL_Window* window = (windows && count > 0) ? windows[0] : nullptr;
+  SDL_free(windows);
+  const SDL_DisplayID display = window ? SDL_GetDisplayForWindow(window) : SDL_GetPrimaryDisplay();
+  const SDL_DisplayMode* mode = display ? SDL_GetCurrentDisplayMode(display) : nullptr;
+  return mode && mode->refresh_rate > 1.0f ? 1e9 / double(mode->refresh_rate) : 0.0;
+}
+
 // The refresh of the grid nearest to t.
 double NearestRefresh(const DisplayGrid& g, double t) {
   return g.anchor_ns + std::round((t - g.anchor_ns) / g.period_ns) * g.period_ns;
@@ -299,9 +317,19 @@ bool FromPresents(double nominal_ns) {
     }
     rex::thread::Sleep(std::chrono::microseconds(500));
   }
+  // The grid starts from the display's own period when SDL knows it and it is a whole fraction of the game's (a
+  // 60, 120, 144 or 240 Hz panel: 144 Hz is no multiple, and the check below keeps the timer for it).
+  double seed_ns = nominal_ns;
+  const double display_ns = DisplayRefreshNs();
+  if (display_ns > 0 && display_ns < 1.05 * nominal_ns) {
+    const double m = std::round(nominal_ns / display_ns);
+    if (m >= 1 && std::fabs(nominal_ns / display_ns - m) < 0.02 * m) seed_ns = display_ns;
+  }
+  REXLOG_INFO("[renut] vblank: the display reports {:.3f} Hz; the grid starts from {:.3f} Hz",
+              display_ns > 0 ? 1e9 / display_ns : 0.0, 1e9 / seed_ns);
   DisplayGrid grid;
   std::atomic<bool> observe{true};
-  std::thread observer(ObservePresents, &grid, nominal_ns, &observe);
+  std::thread observer(ObservePresents, &grid, seed_ns, &observe);
   // Learning the grid: the timer's vblanks while the first images are shown (the game presents once per vblank).
   const uint64_t learn_until = SteadyNs() + 2000000000ull;
   while (g_running.load(std::memory_order_acquire)) {
