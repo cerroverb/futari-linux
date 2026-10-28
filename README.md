@@ -3,231 +3,139 @@
 <img src="app/futari_icon.jpg" alt="Mushihimesama Futari" width="30%">
 
 </div>
-<h1 align=center>Mushihimesama Futari — Nintendo Switch port</h1>
+<h1 align=center>Mushihimesama Futari for Linux</h1>
 
-A native Nintendo Switch port of the Xbox 360 version of **Mushihimesama Futari Ver 1.5** (CAVE, 2009), with the
-**Black Label** and **Ver 1.01** downloadable content.
+This is my fork of [ChanseyIsTheBest/futari-nx](https://github.com/ChanseyIsTheBest/futari-nx), the native Nintendo
+Switch port of the Xbox 360 version of **Mushihimesama Futari Ver 1.5** (CAVE, 2009). It adds a native Linux build for
+AArch64 and x86-64, with the **Black Label** and **Ver 1.01** downloadable content.
 
-It's not an emulator. The PowerPC code of the game's `default.xex` and of its eight game cores (`media/Module/*.xex`)
-is statically recompiled to C++ with [ReXGlue](https://github.com/rexglue/rexglue-sdk) and compiled for the Switch, and
-the game's Direct3D calls are drawn directly on the Switch GPU's own API, deko3d, by
-[reNut](https://github.com/masterspike52/reNut)'s Direct3D-level renderer (version 1.0.1).
+The Switch port already did the hard part. The game's PowerPC code (`default.xex` and its eight game cores in
+`media/Module/*.xex`) is statically recompiled to C++ with [ReXGlue](https://github.com/rexglue/rexglue-sdk), and
+[reNut](https://github.com/masterspike52/reNut)'s Direct3D-level renderer draws the game's Direct3D calls directly.
+Because that port already runs on an ARM processor, its AArch64 code carries straight over to ARM Linux handhelds. On
+Linux the renderer runs on Vulkan through plume instead of deko3d. Nothing is emulated and the game runs without a
+container.
+
+I built and tested it on an AYN Odin 3 Ultra running Armada (Adreno 830 with Mesa Turnip), compiled inside a Fedora
+toolbox and launched natively from Steam Game Mode. The same tree builds for x86-64 Linux with the `linux-amd64` preset.
+
+The Linux changes are also offered upstream in
+[ChanseyIsTheBest/futari-nx#2](https://github.com/ChanseyIsTheBest/futari-nx/pull/2). For the Switch version, use
+upstream and its installer page.
 
 > [!NOTE]
-> You need your own copy of the Xbox 360 disc (a disc image, `.iso`). The Black Label and Ver 1.01 DLC packages
-> (`Content/<profile>/435A07D7/00000002`) are optional.
+> You need your own copy of the Xbox 360 disc, either a disc image (`.iso`) or a folder you extracted it into. The Black
+> Label and Ver 1.01 DLC packages (`Content/<profile>/435A07D7/00000002`) are optional. There are no prebuilt
+> downloads, because the build contains the game's recompiled code and its shaders. You build it from your own copy.
 
-## How to install
+## Building
 
-1. Open the installer page: **https://chanseyisthebest.github.io/futari-nx-installer/**
-2. Choose your game: its **disc image** (`.iso`; you can choose the DLC package files along with it) or a **folder**
-   you extracted the game into. Then press **Create futari-nx.zip**. Everything runs in your browser and the game
-   files never leave your computer: the page checks your copy, downloads the build and makes the shaders from your
-   game's own executables.
-3. Extract the downloaded `futari-nx.zip` into `sdmc:/switch/`.
+The whole process, with the packages for Arch Linux ARM and Fedora, is in
+[docs/building-linux.md](docs/building-linux.md). Build on the machine that will run it, since the code generator and
+the shader tools run on the host during the build.
 
-Your `futari-nx` folder should look like this:
+From a disc image
 
-```text
-/switch/futari-nx/
-  futari.nro
-  LICENSES.txt
-  futari.toml               (your settings; written at the first start when it is missing)
-  deko3d_glsl.bin           (the game's shaders, made from your copy)
-  game_root/                (the files of your disc)
-  dlc/                      (optional: Black Label and Ver 1.01, installed by the game at its first start)
+```sh
+tools/linux/build.sh --iso "/path/to/Mushihimesama Futari.iso"
+tools/linux/package.sh
 ```
 
-The game adds `deko3d_shaders.bin` and `pipeline_list.bin` there as you play (the shaders compiled for the Switch
-GPU, and the list of what it drew, so later sessions prepare it ahead).
+From a folder you already extracted the disc into (`default.xex` and `media/` at its top)
 
-Launch it with a game override (hold **R** while starting an installed title) or a forwarder. Album applet mode does
-not give the game enough memory. If you use a forwarder, set it to a **39-bit address space**.
+```sh
+tools/linux/build.sh --game-dir "/path/to/the/folder"
+tools/linux/package.sh
+```
 
-To build everything yourself instead, see [docs/building.md](docs/building.md).
+Codegen takes about an hour and every step is skipped when its output already exists, so the script can be run again
+after a failure. Each generated file can take 1 to 2 GB to compile, so on a handheld pass `--jobs 4` or `--jobs 8` if
+the build gets killed. On AArch64 you also need DirectXShaderCompiler (`dxc`), which Fedora does not package. The docs
+show how to build it once. On x86-64 the prebuilt one in the tree is used.
 
-> [!NOTE]
-> **Updating:** open the installer page again and press **Create futari-nx-update.zip**. It only holds the new
-> `futari.nro` and the shaders, so there is no need to copy the game again: extract it over your folder. Your
-> `futari.toml`, your saves and the game files stay. Coming from 1.0.0, `futari_shaders.mesp` (+ `.idx`) and the
-> `cache` folder are no longer used: you can delete them.
+`package.sh` puts everything in one folder (`out/futari-nx-linux-arm64/` or `out/futari-nx-linux-amd64/`)
 
-> [!CAUTION]
-> **The first time you play** after installing or updating, the game compiles its shaders for the Switch GPU as it
-> meets them, so **IT CAN STUTTER for a moment** in new places. They are saved next to the NRO
-> (`deko3d_shaders.bin`) and later sessions start smoothly.
+```text
+futari          the executable
+*.so            the SDK runtime, the GPU plugin and the eight game cores
+futari.toml     your settings
+game_root/      the files of your disc
+dlc/            optional Black Label and Ver 1.01, installed by the game at its first start
+```
 
-## Controls
+Run `./futari` from that folder. To add it to Steam, point a non-Steam game at a small script that changes into the
+folder and runs `./futari`, then start it from Game Mode.
 
-By default the face buttons work **by position, as on the Xbox 360 pad** the game was made for: the bottom button is
-the Xbox's A, the right one is the Xbox's B, and so on.
+## Input latency
 
-<div align="center">
+Low input lag was the main goal. The Switch port's work carries over (the game reads the pad as late in its frame as
+it safely can, and a two-image swapchain shows the newest picture). The parts that were Switch-only got a Linux
+version.
 
-| Switch | Xbox 360 |
-| --- | --- |
-| B (bottom) | A |
-| A (right) | B |
-| Y (left) | X |
-| X (top) | Y |
-| ZR / ZL | RT / LT |
-| R / L | RB / LB |
-| + | Start |
-| − | Back |
-| Sticks / D-pad | Sticks / D-pad |
+- The game's 60 Hz vblank follows the display's real refresh. Linux has no vsync event for a window, so the refresh is
+  worked out from when frames actually appeared on screen, using Vulkan's `VK_KHR_present_wait`. A 60, 120, 180 or
+  240 Hz display is followed. Without present wait, or at any other rate, the game keeps its 60 Hz timer and the log
+  says so.
+- `input_sdl_sync_poll` (on by default) updates the gamepads on the thread that reads them, right before each read.
+  Before, a read got the state from the last UI-thread pump, which could be a whole frame old.
 
-</div>
-
-To use the buttons by letter instead (the Switch's A acts as A), set `input_xbox_layout = false` in `futari.toml`.
-
-**Two players:** every controller is its own player, in the order they connect. The console in handheld mode counts
-as one, so handheld + a Pro Controller makes players 1 and 2. Single Joy-Cons are held sideways, one per player (SL
-and SR are the triggers). **L + R + ZR** opens the system's controller screen to connect, reorder, or split a Joy-Con
-pair.
-
-**Remapping:** each player has a button map in `futari.toml` (`[input_p1]` and `[input_p2]`).
+The details and the related settings are in the "Input latency" section of
+[docs/building-linux.md](docs/building-linux.md).
 
 ## Settings
 
-`futari.toml`, next to the NRO, holds only your options. Everything else is built into the NRO.
+`futari.toml` next to the executable holds your options. Any setting can also be given on the command line as
+`--name=value`.
 
 <div align="center">
 
-| Setting | What it does |
+| Setting | Linux default |
 | --- | --- |
-| `input_xbox_layout` | Face buttons by position (`true`, default) or by letter (`false`) |
-| `input_joycon_sideways` | Single Joy-Cons held sideways, one per player (`true`, default) |
-| `input_joycon_sideways_stick` | With it, a single Joy-Con's stick turned for the sideways grip (`true`, default) |
-| `[input_p1]`, `[input_p2]` | Each player's buttons: for every Xbox button, the Switch buttons that press it, e.g. `a = "B, ZR"` |
+| `futari_renderer` | `"renut"` |
+| `renut_gpu_backend` | `"vulkan"` |
+| `fullscreen` | `true` (set `false` for a window) |
+| `log_level` | `"warn"` |
+| `input_sdl_sync_poll` | `true` |
 
 </div>
 
-If you delete `futari.toml`, the game writes the default one again at the next start.
+The game makes its Vulkan surface through X11, so on Wayland it runs through XWayland and under gamescope through
+gamescope's XWayland. On handhelds whose built-in pad is managed by InputPlumber or Steam Input, launch it from Steam
+Game Mode so the controller shows up.
 
-## Performance
+## What changed from upstream
 
-The port runs at the console's stock clocks, at a steady 60 fps. The released NRO is built with link-time
-optimisation, PGO from a console session of this version and the hottest functions first in memory. Every
-optimisation has its own setting and was checked on the PC to give exactly the same picture, frame for frame: the
-measurements are in [docs/futari-notes.md](docs/futari-notes.md).
+- CMake presets `linux-arm64` and `linux-amd64` (clang, Ninja, Vulkan) and a Linux settings template.
+- The eight game cores built as shared libraries next to the executable, loaded by file name.
+- `FUTARI_RELEASE_FORMS`, on by default on Linux AArch64, so the generated code uses the same forms as the Switch
+  build.
+- A system `dxc` and `libdxcompiler` on AArch64 hosts, since there are no prebuilt ARM64 Linux ones.
+- The display-locked vblank and the synchronous SDL pad polling described above.
+- `tools/linux/build.sh`, `codegen.sh` and `package.sh`, and [docs/building-linux.md](docs/building-linux.md).
 
-Version 1.0.1 draws with a new renderer: [reNut](https://github.com/masterspike52/reNut)'s Direct3D-level renderer
-(as the Banjo-Kazooie: Nuts & Bolts port, banjo-nx, adapted it) on deko3d, the Switch GPU's own API. The game's
-Direct3D calls are drawn directly, without writing and reading back the Xbox 360's GPU command stream and without a
-model of its EDRAM; the drawing runs on its own thread. On the console a frame takes about 1-4 ms of that thread and
-4-10 ms of the GPU, out of 16.7. It takes Sonic Adventure 2's (sa2-nx's) CPU work for this renderer too: each draw
-copies only the part of the Direct3D state that changed, so the game's thread spends far less time per draw. Input lag
-is lower: the game reads the controllers as late in its frame as it safely can, its 60 Hz follows the screen's own
-refresh, and the screen shows the newest picture with two images instead of three.
-
-It also compiles the game's code better: the improvements of the code generator and the steps after it from
-[sa2-nx](https://github.com/ChanseyIsTheBest/sa2-nx)'s three CPU rounds (the game's registers kept in the processor's
-registers, constants folded, fewer floating-point mode switches and memory barriers, direct calls where the game called
-through a pointer), on the game's program and all eight game cores. It also corrects two things 1.0.0 did differently
-from the Xbox 360 (a float-to-integer conversion rounded halves away from zero; a compiler flag that allowed
-reordering float operations across a mode switch), and guards against the black textures sa2-nx saw after hours of
-play (its texture-slot fix). On top of that it has the Banjo-Kazooie: Nuts & Bolts port's (banjo-nx's) codegen
-round: shifts and bit-field extracts where the game
-rotates words, register writes and write-backs nothing reads left out, constants found across loop heads, single
-floats computed in single precision, small memory copies inline, the stack pointer and link register kept where they
-are provably unchanged, and copies of tiny functions where they are called. Each step was checked against 1.0.0 on the
-PC, including frame by frame over a replay of the game.
-
-## How it works
-
-- **The game's code is translated, not emulated.** [ReXGlue](https://github.com/rexglue/rexglue-sdk) translates every
-  function of the game's program and of its eight game cores (one per character and mode, all built for the same
-  address and linked statically on the Switch) to C++, which is then compiled for the Switch. ReXGlue also gives the
-  game what it expects from an Xbox 360: its system, files, audio and controllers.
-- **A Direct3D-level renderer on deko3d** (1.0.1). The game's Direct3D calls are replaced by
-  [reNut](https://github.com/masterspike52/reNut)'s renderer (as banjo-nx adapted it), which draws them with
-  [plume](https://github.com/renderbag/plume) on [deko3d](https://github.com/devkitPro/deko3d), the Switch GPU's own
-  API: no GPU command stream is written or parsed and no EDRAM is modelled.
-- **Shaders made from your copy.** Futari keeps all its shaders inside its executables. The installer page takes them
-  from your copy and makes `deko3d_glsl.bin` in your browser: Renut's [XenosRecomp](https://github.com/hedge-dev/XenosRecomp)
-  translates each one to HLSL, DXC compiles it to SPIR-V, [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross)
-  turns that into GLSL and banjo-nx's passes trim it (the way peggle2-nx's installer does it, checked against the
-  PC tools). The console compiles each one with [uam](https://github.com/devkitPro/uam) the first time
-  it is used and keeps the result. The NRO itself holds no shader of the game.
-- **1.0.0's renderer (`futari_renderer = "default"`).** The game's GPU command stream drawn with Vulkan on NVK (Mesa,
-  through [mesa-switch](https://github.com/danfromtico/mesa-switch), in the build of
-  [nfsmw-nx](https://github.com/StevensND/nfsmw-nx)), with the busiest Direct3D paths replaced by native code. It
-  stays in the source; the released NRO no longer links the Vulkan driver (`-DFUTARI_SWITCH_NVK=ON` brings it back).
-- **Audio.** The game's own mixer output goes to the Switch's audio service, unchanged. When the game replays a sound
-  on one of its sound channels it destroys the one still playing there, which cut loud sound effects dead and clicked
-  (the crackle of busy Xbox 360 mode play). Since 1.0.3 a sound cut that way fades out over one audio frame (5.3 ms)
-  first, at the point where the game cuts it; before, the output smoothed the clicks afterwards.
-
-## Documentation
-
-<div align="center">
-
-| Document | What it explains |
-| --- | --- |
-| [docs/building.md](docs/building.md) | How to build the PC test build, the NRO, the shader package and the SD folder |
-| [docs/building-linux.md](docs/building-linux.md) | How to build and run the Linux version (AArch64; x86-64 too) |
-| [docs/futari-notes.md](docs/futari-notes.md) | The port step by step: findings in the game's code, every optimisation and how it was checked |
-| [docs/research/](docs/research/) | Research notes and comparisons with the sibling ports |
-
-</div>
-
-## Build
-
-Windows, LLVM clang 20 and the VS 2022 Build Tools for the PC build; devkitA64, libnx and deko3d from
-[devkitPro](https://devkitpro.org) for the Switch (NVK from [mesa-switch](https://github.com/danfromtico/mesa-switch)
-only for 1.0.0's renderer); Python; and your own copy of the game for the code generator and the shaders. The whole process is in
-[docs/building.md](docs/building.md).
-
-Linux (AArch64 handhelds and boards, also x86-64) builds natively with clang, CMake and DXC: `tools/linux/build.sh`, in
-[docs/building-linux.md](docs/building-linux.md).
-
-<div align="center">
-
-| Folder | Contents |
-| --- | --- |
-| `app/` | The game: hooks, native renderer, native functions, settings, CMake project |
-| `sdk/` | ReXGlue SDK with the Horizon layer and the code generator changes |
-| `shaders/` | XenosRecomp with the ports' changes, the shader package tools and the installer's WebAssembly builds |
-| `tools/` | Code generation steps, build and test scripts, analysis tools |
-| `patches/` | Every change to third-party code (the SDK, FFmpeg, XenosRecomp) as diffs against upstream |
-| `pgo/` | The PGO profile the released NRO was built with |
-| `mesa/` | Which NVK driver build 1.0.0's renderer links (`-DFUTARI_SWITCH_NVK=ON`) |
-| `docs/` | Documentation |
-
-</div>
+The Windows and Switch builds are untouched. For the port itself (every optimisation, the renderer, audio, and how
+each change was checked) see upstream's README and [docs/futari-notes.md](docs/futari-notes.md).
 
 ## Credits
 
-- **CAVE** — creators of Mushihimesama Futari. This is an unofficial, fan-made port with no affiliation.
-- **ChanseyIsTheBest** — this port.
-- **[Tom Clay](https://github.com/rexglue/rexglue-sdk)** — the ReXGlue SDK, built on the work of the
+- **CAVE** created Mushihimesama Futari. This is an unofficial, fan-made port with no affiliation.
+- **[ChanseyIsTheBest](https://github.com/ChanseyIsTheBest/futari-nx)** made the Switch port this fork is built on.
+  Everything outside the Linux changes is that work and the work it credits.
+- **[Tom Clay](https://github.com/rexglue/rexglue-sdk)** made the ReXGlue SDK, built on the work of the
   **[Xenia](https://xenia.jp)** team.
-- **[StevensND](https://github.com/StevensND/nfsmw-nx)** — nfsmw-nx: the Switch layer of the SDK, the NVK build and
-  much of the method; and [nfsmw-nx-installer](https://github.com/StevensND/nfsmw-nx-installer), the installer page
-  this port's is built on.
-- **[nebadasSwifty](https://github.com/nebadasSwifty/masseffect-nx)** — masseffect-nx: the native renderer this port's
-  renderer grew from.
-- **[hedge-dev](https://github.com/hedge-dev/XenosRecomp)** — XenosRecomp, the Xenos shader translator.
-- **reNut and [masterspike52](https://github.com/masterspike52/reNut)** — reNut's Direct3D-level renderer, which the
-  deko3d renderer is (reused with its author's permission); and Banjo-Kazooie: Nuts & Bolts' port (banjo-nx), whose
-  adaptation of it, plume deko3d back end, shader passes and tools this port takes.
-- **[plume](https://github.com/renderbag/plume)** (from UnleashedRecomp), **[deko3d](https://github.com/devkitPro/deko3d)**
-  and **[uam](https://github.com/devkitPro/uam)** by fincs, with SwitchWakerHD's uam patches.
-- **[danfromtico](https://github.com/danfromtico/mesa-switch)** and **[NaGaa95](https://github.com/NaGaa95/mesa-switch)**
-  — mesa-switch: Mesa, NVK and NAK on Horizon.
-- **[devkitPro](https://devkitpro.org) and [switchbrew](https://github.com/switchbrew/libnx)** — devkitA64 and libnx.
-- The sibling ports ([Sonic Adventure 2](https://github.com/ChanseyIsTheBest/sa2-nx), Banjo-Kazooie: Nuts & Bolts,
-  Sonic & All-Stars Racing Transformed, Peggle 2), which share their fixes with this one; Peggle 2's port (peggle2-nx)
-  for the installer's deko3d shader chain and Renut's translator front end without DXC.
-- **[KhronosGroup](https://github.com/KhronosGroup/SPIRV-Cross)** — SPIRV-Cross.
-- The other libraries listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- **reNut and [masterspike52](https://github.com/masterspike52/reNut)** made the Direct3D-level renderer, and
+  **[plume](https://github.com/renderbag/plume)** (from UnleashedRecomp) is the graphics layer it draws with.
+- **[hedge-dev](https://github.com/hedge-dev/XenosRecomp)** made XenosRecomp, the Xenos shader translator.
+- **[SDOJ-Recomp](https://github.com/eandis/SDOJ-Recomp)** served as a reference for the Linux input-latency work.
+- The full upstream credits and the other libraries are in upstream's README and
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Linux port by cerroverb.
 
 ## Legal
 
-No affiliation with CAVE, Microsoft or Nintendo. "Mushihimesama Futari" is a trademark of CAVE Interactive. This
-repository contains no assets or program code from the original game. Users must provide their own legally obtained
-copy, and everything made from it (`assets/`, `app/generated/`, the shaders) is made on their own computer.
-Running homebrew requires custom firmware, which violates Nintendo's ToS and can get a console banned — your call.
+No affiliation with CAVE or Microsoft. "Mushihimesama Futari" is a trademark of CAVE Interactive. This repository
+contains no assets or program code from the original game. You must provide your own legally obtained copy, and
+everything made from it (`assets/`, `app/generated/`, the shaders) is made on your own computer.
 
 Source code is provided under the GPL-3.0 License (see [LICENSE](LICENSE)), like the ports it builds on. The SDK keeps
 its BSD-3-Clause license (see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
