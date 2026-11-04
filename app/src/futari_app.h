@@ -28,6 +28,7 @@
 #endif
 #include "futari_memory_log.h"
 #include "futari_pgo.h"
+#include "futari_settings_menu.h"
 #include "futari_pc_profiler.h"
 #include "me/me_native_system.h"
 // Renut's Direct3D-level renderer (futari_renderer = "renut"; cmake/futari_renut_gpu.cmake).
@@ -166,6 +167,7 @@ class FutariApp : public rex::ReXApp {
   }
 
   void OnPostSetup() override {
+    futari::settings_menu::Apply();
 #if defined(FUTARI_WINDOW_ICON)
     // futari-linux (2026-10-29): the window's name and icon, as UnleashedRecomp sets its own (ui/game_window.cpp
     // SetTitle, SetIcon): "futari-linux-<architecture>", the same name as the app id the taskbar groups by

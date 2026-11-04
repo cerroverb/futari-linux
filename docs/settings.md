@@ -2,10 +2,13 @@
 
 ## The settings window
 
-Press **F4** in the game: a window lists every setting by category, with a search box at the top. Change a value,
-then press **Save to config**; it is written to `futari.toml` next to the game. Settings marked as needing a restart take
-effect at the next start. On a handheld without a keyboard, map a button to F4 in Steam Input.
-The window is the rexglue SDK's own (src/ui/overlay/settings_overlay.cpp).
+Press **F4** in the game: a window lists the settings that apply to this game, with a search box at the top. Under
+Futari they are grouped as Audio, Display, Game, Keybinds, Keyboard, Latency and Logs. Change a value, then press
+**Save to config**; it is written to `futari.toml` next to the game. A name in yellow takes effect at the next start;
+the others apply at once. Hover over a name to read what it does. On a handheld without a keyboard, map a button to F4
+in Steam Input. Keyboard play needs `mnk_mode` on.
+The window is the rexglue SDK's own (src/ui/overlay/settings_overlay.cpp); which settings it lists is decided in
+`app/src/futari_settings_menu.cpp`. Every other setting below still works in `futari.toml` and as a launch option.
 
 The same settings also work as launch options:
 

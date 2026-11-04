@@ -126,6 +126,8 @@ set(FUTARI_SOURCES
     src/futari_memory_log.cpp
     # On/off keys for every enhancement + the CPU / non-CPU masters (futari_cpu_enhancements, futari_noncpu_...).
     src/futari_enhancements.cpp
+    # The F4 window lists this game's settings only (ported from espgaluda2-recomp src/settings_menu.cpp).
+    src/futari_settings_menu.cpp
     # PC sampling profiler (cvar futari_pc_profile_s; tools/pc_hot_functions.py). Nothing on the Switch.
     src/futari_pc_profiler.cpp
     # Native replacements of hot guest functions (src/native/futari_native.h): framework + default.xex's natives. The

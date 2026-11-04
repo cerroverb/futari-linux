@@ -314,8 +314,11 @@ void SettingsDialog::OnDraw(ImGuiIO& /*io*/) {
 
   // Helper: check if a category is a keybind category.
   auto is_keybind_category = [](const std::string& cat) -> bool {
+    // futari-linux: key bindings may sit under the app's own category ("<App>/Keybinds/..."), ported from
+    // espgaluda2-recomp sdk-patches/0013.
     return cat == "Input/Keybinds" ||
-           (cat.size() > 15 && cat.compare(0, 15, "Input/Keybinds/") == 0);
+           (cat.size() > 15 && cat.compare(0, 15, "Input/Keybinds/") == 0) ||
+           cat.ends_with("/Keybinds") || cat.find("/Keybinds/") != std::string::npos;
   };
 
   // One value panel per category: when the category changes, the controller
@@ -363,7 +366,7 @@ void SettingsDialog::OnDraw(ImGuiIO& /*io*/) {
     if (is_keybind_category(entry.category)) {
       // Grey out controller keybinds when MnK mode is disabled
       bool mnk_disabled =
-          (entry.category == "Input/Keybinds/Controller" && !REXCVAR_QUERY(bool, mnk_mode));
+          (entry.category.ends_with("Keybinds/Controller") && !REXCVAR_QUERY(bool, mnk_mode));
       if (mnk_disabled)
         ImGui::BeginDisabled();
 
