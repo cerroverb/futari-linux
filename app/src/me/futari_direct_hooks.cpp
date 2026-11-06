@@ -86,7 +86,7 @@ REX_HOOK_RAW(sub_8209D800) {  // D3DDevice_BeginVertices (dev, primitive type, v
 
 REX_EXTERN(__imp__sub_8209DCE0);
 REX_HOOK_RAW(sub_8209DCE0) {  // D3DDevice_BeginIndexedVertices -> HRESULT (indices, vertices through pointers)
-  FUTARI_RENUT_ORIGINAL(sub_8209DCE0)  // Renut's renderer has no BeginIndexedVertices: Direct3D's own
+  FUTARI_RENUT_YIELD(D3DDevice_BeginIndexedVertices)
   static const bool same = SameCode(base, "BeginIndexedVertices", 0x8209DCE0u, 326, 0xB459438DC3CBAF5Dull);
   if (futari::d3d::CensusOn()) [[unlikely]] {  // futari_diag_d3d_census: counted, nothing converted
     futari::d3d::NoteDraw(base, ctx.r3.u32);

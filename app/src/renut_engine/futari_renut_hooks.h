@@ -19,6 +19,7 @@ extern "C" void futari_renut_entry_D3DDevice_AcquireThreadOwnership(PPCContext& 
 extern "C" void futari_renut_entry_D3DDevice_AddRef(PPCContext& ctx, uint8_t* base);
 extern "C" void futari_renut_entry_D3DDevice_BeginCommandBuffer(PPCContext& ctx, uint8_t* base);
 extern "C" void futari_renut_entry_D3DDevice_BeginExport(PPCContext& ctx, uint8_t* base);
+extern "C" void futari_renut_entry_D3DDevice_BeginIndexedVertices(PPCContext& ctx, uint8_t* base);
 extern "C" void futari_renut_entry_D3DDevice_BeginTiling(PPCContext& ctx, uint8_t* base);
 extern "C" void futari_renut_entry_D3DDevice_BeginVertices(PPCContext& ctx, uint8_t* base);
 extern "C" void futari_renut_entry_D3DDevice_BlockOnFence(PPCContext& ctx, uint8_t* base);
@@ -385,6 +386,7 @@ extern "C" void futari_renut_entry_XGRegisterVertexShader(PPCContext& ctx, uint8
 #define FUTARI_RENUT_SITE_D3DDevice_AddRef  // not in Futari's Direct3D
 #define FUTARI_RENUT_SITE_D3DDevice_BeginCommandBuffer  // not in Futari's Direct3D
 #define FUTARI_RENUT_SITE_D3DDevice_BeginExport  // not in Futari's Direct3D
+#define FUTARI_RENUT_SITE_D3DDevice_BeginIndexedVertices  // sub_8209DCE0: Futari's own hook (app/src/me/futari_direct_hooks.cpp) yields
 #define FUTARI_RENUT_SITE_D3DDevice_BeginTiling  // not in Futari's Direct3D
 #define FUTARI_RENUT_SITE_D3DDevice_BeginVertices  // sub_8209D800: Futari's own hook (app/src/me/futari_direct_hooks.cpp) yields
 #define FUTARI_RENUT_SITE_D3DDevice_BlockOnFence \

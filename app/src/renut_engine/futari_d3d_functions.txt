@@ -71,4 +71,5 @@ D3DDevice_SetTexture                         8209D660  checked: d3d_match 0.84 (
 D3DDevice_SetStreamSource                    820991D8  checked: d3d_match 0.88 (next 0.41); stride byte at +0x31A0 (N&B +0x30F0 + 0xB0)
 D3D_AlignTextureDimensions                   8209B860  checked: d3d_match 0.89 (next 0.22)
 D3D_CDevice_BlockOnFence                     820A8220  checked: reads the completion pointer +10896 and the fence tag +10908 as N&B's 0x8228F558
+D3DDevice_BeginIndexedVertices               8209DCE0  checked: the XDK's nine arguments in its first instructions; the game's one caller writes 8 vertices and 24 indices
 D3DResource_Destroy                          820A3E98  checked: d3d_match 0.60 (next 0.22); the release path's destroy (44 nested calls)

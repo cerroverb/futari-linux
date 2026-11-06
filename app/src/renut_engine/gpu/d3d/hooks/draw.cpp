@@ -235,6 +235,52 @@ u32 D3DDevice_BeginVertices_hook(u32 device, u32 primitive, u32 vertex_count, u3
   return scratch;
 }
 
+// HRESULT D3DDevice_BeginIndexedVertices(D3DDevice*, D3DPRIMITIVETYPE, INT BaseVertexIndex,
+//     UINT NumVertices, UINT IndexCount, D3DFORMAT IndexDataFormat, UINT VertexStreamZeroStride,
+//     void **ppIndexData, void **ppVertexData) [default.xex 0x8209DCE0]
+// futari-linux: not in N&B, which never calls it. D3DDevice_BeginVertices_hook above with the
+// indices after the vertices in the same scratch. The original's state flush binds the shader from
+// its microcode, which renderer-owned shader objects do not carry, and bugchecks (0xF5) on what it
+// reads there, as D3DDevice_DrawIndexedTessellatedVertices_hook says; its draw reaches no renderer.
+u32 D3DDevice_BeginIndexedVertices_hook(u32 device, u32 primitive, u32 base_vertex,
+                                        u32 num_vertices, u32 index_count, u32 index_format,
+                                        u32 stride, u32 index_data_va, u32 vertex_data_va) {
+  constexpr u32 kOutOfMemory = 0x8007000E;
+  const bool index32 = (index_format & 4) != 0;  // D3DFMT_INDEX32
+  const u64 vertex_bytes = u64(num_vertices) * stride;
+  const u64 index_bytes = u64(index_count) * (index32 ? 4 : 2);
+  const u64 index_offset = (vertex_bytes + 3) & ~u64(3);
+  if (!vertex_bytes || !index_bytes || index_offset + index_bytes > kVerticesScratchSize)
+    return kOutOfMemory;
+  // The inline end: m_pRing = [device + kDeviceOffsetVerticesRingEnd].
+  StoreU32(device + d3d::kDeviceOffsetVerticesRingEnd,
+           LoadU32(device + u32(offsetof(d3d::Device, m_pRing))));
+
+  const u32 scratch = VerticesScratch(device);
+  if (!scratch)
+    return kOutOfMemory;
+  const u32 index_scratch = scratch + u32(index_offset);
+  StoreU32(index_data_va, index_scratch);
+  StoreU32(vertex_data_va, scratch);
+  DrawCall call;
+  call.primitive = primitive;
+  call.indexed = true;
+  call.base_vertex = i32(base_vertex);
+  call.count = index_count;
+  call.up_indices_32 = index32;
+  call.up_vertices = GuestPtr<const u8>(scratch);
+  call.up_stride = stride;
+  call.up_vertex_count = num_vertices;
+  const auto *indices = GuestPtr<const u8>(index_scratch);
+  if (IsRecordingCommandBuffer(device))
+    RecordDeferredDraw(device, call, call.up_vertices, u32(vertex_bytes), indices, u32(index_bytes));
+  else if (Active())
+    QueueDeferredDraw(device, call, call.up_vertices, u32(vertex_bytes), indices, u32(index_bytes));
+  else
+    FlushDeferredVertices(device);
+  return 0;
+}
+
 // A clear: the renderer's, recorded or queued, then N&B's device work.
 // whole_target: BeginTiling's, of one tile's worth of EDRAM, which on the
 // host is the whole tiled target.
@@ -569,6 +615,7 @@ FUTARI_RENUT_HOOK(D3DDevice_DrawIndexedTessellatedVertices, D3DDevice_DrawIndexe
 FUTARI_RENUT_HOOK(D3DDevice_DrawVerticesUP, D3DDevice_DrawVerticesUP_hook);  // N&B sub_8222E520
 FUTARI_RENUT_HOOK(D3DDevice_DrawIndexedVerticesUP, D3DDevice_DrawIndexedVerticesUP_hook);  // N&B sub_82656728
 FUTARI_RENUT_HOOK(D3DDevice_BeginVertices, D3DDevice_BeginVertices_hook);  // N&B sub_8222CC50
+FUTARI_RENUT_HOOK(D3DDevice_BeginIndexedVertices, D3DDevice_BeginIndexedVertices_hook);  // futari-linux, not in N&B
 FUTARI_RENUT_HOOK(D3DDevice_ClearF, D3DDevice_ClearF_hook);  // N&B sub_822811A0
 FUTARI_RENUT_HOOK(D3DDevice_Clear, D3DDevice_Clear_hook);  // N&B sub_822812C8
 FUTARI_RENUT_HOOK(D3DDevice_Resolve, D3DDevice_Resolve_hook);  // N&B sub_8222D6C8

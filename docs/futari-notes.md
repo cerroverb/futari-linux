@@ -1219,7 +1219,9 @@ Switch): no PM4 ring, no EDRAM model, no register file rebuilt from packets. Bui
   plus 25 checked by hand; the render and sampler state setters and getters are left to the game, whose own setters
   keep the device as Renut reads it). Seven addresses are Futari's own hooks (BeginVertices, AllocateInlineData,
   SetSurfaceClip, Clear, Resolve, KickOff, CBlocker_Check): they hand over first thing (`FUTARI_RENUT_YIELD`).
-  BeginIndexedVertices (no Renut hook; Futari draws through BeginVertices / DrawVerticesUP) runs Direct3D's own.
+  BeginIndexedVertices has no hook in Renut (N&B never calls it). Under Direct3D's own, its state flush read the
+  renderer's shader objects and bugchecked (0xF5) on about 3 of 10 entries to Screen Setting, so
+  `D3DDevice_BeginIndexedVertices_hook` (hooks/draw.cpp, futari-linux) replaces it, on the model of BeginVertices.
 - **The eight game cores**: each links its own Direct3D (on default.xex's device). The tool finds each core's copy of
   each mapped function (equal instructions with branch targets ignored, else with immediates ignored; unique in the
   core; its calls land on the core's copies of what default.xex's call): 45 of the 70 in every core, 38 hooked by
