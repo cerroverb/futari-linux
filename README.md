@@ -53,7 +53,9 @@ kernel and XAM calls are Xenia-derived reimplementations in C++.
 Mostly no. The vast majority of this project is code ported and retooled from other recompilation projects, such as
 futari-nx (the Switch port this is built on, renderer included), UnleashedRecomp with hedge-dev's plume and
 XenosRecomp (the Vulkan layer, the shader translation, frame pacing, window icon), springah's futari_recomp (exit from the title screen) and SDOJ-Recomp (a reference for the
-input-lag work), made to work for Futari on Linux. LLM assistance was used in the porting, but under strict supervision and guidelines and with all changes rigorously reviewed and tested. As an example of what I mean by "assisted", I wrote/ported most of the Linux-side input latency code myself, then ran it through Claude to improve, debug, fed it back to me to review, tweak and test, and so on.
+input-lag work), made to work for Futari on Linux. LLM assistance was used in the porting, but under strict supervision and guidelines and with all changes rigorously reviewed and tested. As an example of what I mean by "assisted", I wrote/ported most of the Linux-side input latency code myself, then ran it through an LLM to improve, debug, fed it back to me to review, tweak and test, and so on.
+
+Quiver Launcher once again, without my knowledge, switched their tag from AI-assisted, which accurately describes my work on this port, to mostly AI, even though they had already changed it. This is not accurate. 
 
 There is also a strict no machine generated media rule, so you will never see slop generated "art" (generated slop is not art) or media in regards to any project I administer. 
 
