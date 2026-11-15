@@ -64,7 +64,12 @@ jobs:
           ls -la $f
           tar -tzf $f
           mkdir -p /tmp/check && tar -xzf $f -C /tmp/check
-          ! strings /tmp/check/*/* 2>/dev/null | grep -q -E "/home/runner|default\.xex$"
+          # No path of the build machine, and no path to a game file, in any file of the archive. The program's own
+          # names "default.xex" and "game:\default.xex" are no paths of this machine and pass.
+          if find /tmp/check -type f -exec strings {} + | grep -E "/home/runner|/[^ ]*default\.xex$"; then
+            echo "paths of the build machine in the archive" >&2
+            exit 1
+          fi
           file /tmp/check/*/futari
 
       - name: Upload
