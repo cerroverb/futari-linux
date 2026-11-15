@@ -66,14 +66,25 @@ copy_program() {
     find "$build" -maxdepth 1 -name '*.so' -exec cp -f {} "$1/" \;
 }
 
+# A release folder starts empty. The default one, out/$name, is this script's own output and is replaced. A folder
+# given with --out is never deleted: it may be an installed game with its saves.
+start_release_dir() {
+    if [ -z "$out" ]; then
+        out="$root/out/$name"
+        rm -rf "$out"
+    elif [ -e "$out" ] && [ -n "$(find "$out" -mindepth 1 -print -quit)" ]; then
+        echo "$out is not empty: give --out a new folder, or leave it out" >&2
+        exit 1
+    fi
+}
+
 if [ "$complete" -eq 1 ]; then
     if grep -q '^FUTARI_LINUX_RELEASE_SHADERS:BOOL=ON$' "$build/CMakeCache.txt"; then
         echo "$build is a --release build (no shaders): run tools/linux/build.sh without --release" >&2
         exit 1
     fi
     name="futari-linux-$arch"
-    out="${out:-$root/out/$name}"
-    rm -rf "$out"
+    start_release_dir
     copy_program "$out"
     mkdir -p "$out/tools/extract-xiso" "$out/game_root" "$out/dlc"
     cp "$build/tools/extract-xiso/extract-xiso" "$build/tools/extract-xiso/LICENSE.TXT" "$out/tools/extract-xiso/"
@@ -92,8 +103,7 @@ if [ "$release" -eq 1 ]; then
         exit 1
     fi
     name="futari-linux-installer-$arch"
-    out="${out:-$root/out/$name}"
-    rm -rf "$out"
+    start_release_dir
     copy_program "$out"
     write_launcher "$out"
     cp "$root/app/futari_linux.toml" "$out/futari.toml"
