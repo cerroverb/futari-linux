@@ -270,7 +270,10 @@ class FutariApp : public rex::ReXApp {
                        }
                        rex::ShowSimpleMessageBox(rex::SimpleMessageBoxType::Error,
                                                  ok ? "The extracted game files were not found." : error);
-                       app_context().QuitFromUIThread();
+                       // The close button's path, which ends the process in OnClosing. QuitFromUIThread returns
+                       // from main instead, and the renderer's static state is then destroyed after SDL closed
+                       // its Wayland connection: a segmentation fault in the swapchain's destructor.
+                       if (rex::ui::Window* w = window()) w->RequestClose();
                      });
     return std::nullopt;
 #else

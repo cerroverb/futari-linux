@@ -153,7 +153,8 @@ void SetMessage(IsoInstaller::State& state, std::string message) {
 }
 
 // Runs extract-xiso and waits for it, updating the progress text. Returns the
-// exit status, or -1 if it could not be started or was cancelled.
+// exit status, or -1 if it could not be started, was cancelled, or its status
+// could not be read.
 int RunExtractor(IsoInstaller::State& state, const fs::path& extractor, const fs::path& iso,
                  const fs::path& out_dir, const fs::path& log_path) {
   posix_spawn_file_actions_t actions;
@@ -181,9 +182,11 @@ int RunExtractor(IsoInstaller::State& state, const fs::path& extractor, const fs
   const auto name = iso.filename().string();
   auto last_poll = std::chrono::steady_clock::time_point{};
   int status = 0;
+  bool exited = false;
   while (true) {
     pid_t r = waitpid(child, &status, WNOHANG);
-    if (r == child || (r < 0 && errno != EINTR)) {
+    exited = r == child;
+    if (exited || (r < 0 && errno != EINTR)) {
       break;
     }
     if (!state.active.load()) {
@@ -203,7 +206,8 @@ int RunExtractor(IsoInstaller::State& state, const fs::path& extractor, const fs
     std::lock_guard lock(state.mutex);
     state.child = -1;
   }
-  return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+  // A failed waitpid leaves no status to read: that is a failure, not exit code 0.
+  return exited && WIFEXITED(status) ? WEXITSTATUS(status) : -1;
 }
 
 std::string Install(IsoInstaller::State& state, const fs::path& exe_dir, const fs::path& game_root) {
