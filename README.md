@@ -50,8 +50,8 @@ kernel and XAM calls are Xenia-derived reimplementations in C++.
 
 ### Is this AI slop?
 
-Mostly no. The vast majority of this project is code ported and retooled from other recompilation projects, such as UnleashedRecomp with hedge-dev's plume and XenosRecomp (the Vulkan layer, the shader translation, frame pacing, window icon), springah's futari_recomp (exit from the title screen) and SDOJ-Recomp (a reference for the
-input-lag work), along with, of course, existing Futari projects like futari-nx and springah's futari_recomp, tailored for Futari on Linux. LLM assistance was used in the porting, but under strict supervision and guidelines and with all changes rigorously reviewed and tested. As an example of what I mean by "assisted", I wrote/ported most of the Linux-side input latency code myself, then ran it through an LLM to debug, fed it back to me to review, tweak and test, and so on.
+No, not really. The vast majority of this project is code ported and retooled from other recompilation projects, such as UnleashedRecomp with hedge-dev's plume and XenosRecomp (the Vulkan layer, the shader translation, frame pacing, window icon), springah's futari_recomp (exit from the title screen) and SDOJ-Recomp (a reference for the
+input-lag work), along with, of course, existing Futari projects like futari-nx and springah's futari_recomp, tailored for Futari on Linux. LLM assistance was used in the porting upstream, and I experimented with it for this project, but under strict supervision and guidelines and with all changes rigorously reviewed and tested. As an example of what I mean by "assisted", I wrote/ported most of the Linux-side input latency code myself, then ran it through an LLM to debug, fed it back to me to review, tweak and test, and so on.
 
 There is also a strict no machine generated media rule, so you will never see slop generated "art" (generated slop is not art) or media in regards to any project I administer. 
 
